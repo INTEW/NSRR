@@ -1,0 +1,30 @@
+{
+    "version": "0.3.0",
+    "configurations": [
+    
+        {
+            "name": "Run model training",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/train.py",
+            "console": "integratedTerminal",
+            "args": ["-c", "config.json", "-d", "1"]
+        },
+        {
+            "name": "Run model testing",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/test.py",
+            "console": "integratedTerminal",
+            "args": ["-c", "config.json", "-d", "1"]
+        },
+        {
+            "name": "Run unit tests",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/debug.py",
+            "console": "integratedTerminal",
+            "args": ["-c", "config.json", "-d", "1"]
+        }
+    ]
+}
