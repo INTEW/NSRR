@@ -6,6 +6,7 @@ import model.loss as module_loss
 import model.metric as module_metric
 import model.model as module_arch
 from parse_config import ConfigParser
+from torchvision import utils as vutils
 
 
 def main(config):
@@ -14,7 +15,7 @@ def main(config):
     # setup data_loader instances
     data_loader = getattr(module_data, config['data_loader']['type'])(
         config['data_loader']['args']['data_dir'],
-        batch_size=512,
+        batch_size=6,
         shuffle=False,
         validation_split=0.0,
         num_workers=2,
@@ -47,17 +48,24 @@ def main(config):
     total_metrics = torch.zeros(len(metric_fns))
 
     with torch.no_grad():
-        for i, (data, target) in enumerate(tqdm(data_loader)):
-            data, target = data.to(device), target.to(device)
-            output = model(data)
+        for i, (img_view, img_depth, img_flow, img_view_truth) in enumerate(tqdm(data_loader)):
+            img_view = img_view.to(device)
+            img_depth = img_depth.to(device)
+            img_flow = img_flow.to(device)
+            img_view_truth = img_view_truth.to(device)
+            target = img_view_truth[0].unsqueeze(0)
+            low_target = img_view[0].unsqueeze(0)
+            output = model(img_view , img_depth , img_flow)
+            vutils.save_image(output, './output_test/output_{}.png'.format(i))
+            vutils.save_image(low_target, './output_test/low_{}.png'.format(i))
 
             #
             # save sample images, or do something with output here
             #
 
             # computing loss, metrics on test set
-            loss = loss_fn(output, target)
-            batch_size = data.shape[0]
+            loss = loss_fn(output, target, 0.1)
+            batch_size = img_view.shape[0]
             total_loss += loss.item() * batch_size
             for i, metric in enumerate(metric_fns):
                 total_metrics[i] += metric(output, target) * batch_size
