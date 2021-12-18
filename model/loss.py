@@ -3,6 +3,7 @@ import torch.nn as nn
 import torchvision
 import pytorch_ssim
 
+#from pytorch_msssim import ssim
 from utils import SingletonPattern
 from model import LayerOutputModelDecorator
 
@@ -33,7 +34,7 @@ def nsrr_loss(output: torch.Tensor, target: torch.Tensor, w: float) -> torch.Ten
     loss_ssim = 1 - pytorch_ssim.ssim(output, target)
     loss_perception = 0
     conv_layers_output = PerceptualLossManager().get_vgg16_conv_layers_output(output)
-    conv_layers_target = PerceptualLossManager().get_vgg16_conv_layers_output(output)
+    conv_layers_target = PerceptualLossManager().get_vgg16_conv_layers_output(target)
     for i in range(len(conv_layers_output)):
         loss_perception += feature_reconstruction_loss(conv_layers_output[i], conv_layers_target[i])
     loss = loss_ssim + w * loss_perception

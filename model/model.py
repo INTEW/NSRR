@@ -2,7 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from base import BaseModel
-
+import pytorch_colors as colors
+from torchvision import utils as vutils
 
 from typing import Union, List, Tuple, Callable, Any
 
@@ -17,7 +18,42 @@ class NSRRModel(BaseModel):
         self.flow_sensitivity = 0.5
         self.number_previous_frames = 5
         ###############################################################
-        self.featureExtractSeq = nn.Sequential(
+        self.featureExtractSeq1 = nn.Sequential(
+            nn.Conv2d(4, 32, kernel_size=self.kernel_size, padding=self.padding),
+            nn.ReLU(),
+            nn.Conv2d(32, 32, kernel_size=self.kernel_size, padding=self.padding),
+            nn.ReLU(),
+            nn.Conv2d(32, 8, kernel_size=self.kernel_size, padding=self.padding),
+        )
+        self.featureExtractSeq2 = nn.Sequential(
+            nn.Conv2d(4, 32, kernel_size=self.kernel_size, padding=self.padding),
+            nn.ReLU(),
+            nn.Conv2d(32, 32, kernel_size=self.kernel_size, padding=self.padding),
+            nn.ReLU(),
+            nn.Conv2d(32, 8, kernel_size=self.kernel_size, padding=self.padding),
+        )
+        self.featureExtractSeq3 = nn.Sequential(
+            nn.Conv2d(4, 32, kernel_size=self.kernel_size, padding=self.padding),
+            nn.ReLU(),
+            nn.Conv2d(32, 32, kernel_size=self.kernel_size, padding=self.padding),
+            nn.ReLU(),
+            nn.Conv2d(32, 8, kernel_size=self.kernel_size, padding=self.padding),
+        )
+        self.featureExtractSeq4 = nn.Sequential(
+            nn.Conv2d(4, 32, kernel_size=self.kernel_size, padding=self.padding),
+            nn.ReLU(),
+            nn.Conv2d(32, 32, kernel_size=self.kernel_size, padding=self.padding),
+            nn.ReLU(),
+            nn.Conv2d(32, 8, kernel_size=self.kernel_size, padding=self.padding),
+        )
+        self.featureExtractSeq5 = nn.Sequential(
+            nn.Conv2d(4, 32, kernel_size=self.kernel_size, padding=self.padding),
+            nn.ReLU(),
+            nn.Conv2d(32, 32, kernel_size=self.kernel_size, padding=self.padding),
+            nn.ReLU(),
+            nn.Conv2d(32, 8, kernel_size=self.kernel_size, padding=self.padding),
+        )
+        self.featureExtractSeq6 = nn.Sequential(
             nn.Conv2d(4, 32, kernel_size=self.kernel_size, padding=self.padding),
             nn.ReLU(),
             nn.Conv2d(32, 32, kernel_size=self.kernel_size, padding=self.padding),
@@ -27,10 +63,37 @@ class NSRRModel(BaseModel):
         self.motion_upsampling_model = nn.UpsamplingBilinear2d(scale_factor=self.scale_factor)
         self.feature_reweighting_model = NSRRFeatureReweightingModel()
         self.reconstructionModel = NSRRReconstructionModel()
-    def feature_extract_model(self, color_images, depth_images):
+    def feature_extract_model1(self, color_images, depth_images):
         x = torch.cat((color_images, depth_images), dim=1)
-        x_out = self.featureExtractSeq(x)
+        x_out = self.featureExtractSeq1(x)
         return torch.cat((x, x_out), dim=1)
+    
+    def feature_extract_model2(self, color_images, depth_images):
+        x = torch.cat((color_images, depth_images), dim=1)
+        x_out = self.featureExtractSeq2(x)
+        return torch.cat((x, x_out), dim=1)
+    
+    def feature_extract_model3(self, color_images, depth_images):
+        x = torch.cat((color_images, depth_images), dim=1)
+        x_out = self.featureExtractSeq3(x)
+        return torch.cat((x, x_out), dim=1)
+
+    def feature_extract_model4(self, color_images, depth_images):
+        x = torch.cat((color_images, depth_images), dim=1)
+        x_out = self.featureExtractSeq4(x)
+        return torch.cat((x, x_out), dim=1)
+
+    def feature_extract_model5(self, color_images, depth_images):
+        x = torch.cat((color_images, depth_images), dim=1)
+        x_out = self.featureExtractSeq5(x)
+        return torch.cat((x, x_out), dim=1)
+    
+    def feature_extract_model6(self, color_images, depth_images):
+        x = torch.cat((color_images, depth_images), dim=1)
+        x_out = self.featureExtractSeq6(x)
+        return torch.cat((x, x_out), dim=1)
+
+    
     def zero_upsampling_model(self, x):
         return upsample_zero_2d(x, scale_factor=self.scale_factor)
     def flow_motion_model(self, x):
@@ -38,9 +101,9 @@ class NSRRModel(BaseModel):
     def motion_warping_model(self, img, motion):
         return backward_warp_motion(img, motion)
     def forward(self, x_view, x_depth, x_flow):
-        # print(x_view.shape)
+        #print(x_view.shape)
         # print(x_depth.shape)
-        # print(x_flow.shape)
+        #print(x_flow.shape)
 
         # [6:c:w:h]
         current_view = x_view[0].unsqueeze(0)
@@ -50,26 +113,50 @@ class NSRRModel(BaseModel):
         list_previous_view = []
         list_previous_depth = []
         list_previous_flow = []
-
+        
+        current_view_Ycbcr = colors.rgb_to_ycbcr(current_view)
+        
         for i in range(1, self.number_previous_frames + 1):
             list_previous_view.append(x_view[i].unsqueeze(0))
             list_previous_depth.append(x_depth[i].unsqueeze(0))
             list_previous_flow.append(x_flow[i].unsqueeze(0))
 
         # 1°) extract features
-        current_features = self.feature_extract_model(current_view, current_depth)
+        current_features = self.feature_extract_model1(current_view_Ycbcr, current_depth)
         list_previous_features = []
-        for i in range(self.number_previous_frames):
-            list_previous_features.append(
-                self.feature_extract_model(
-                    list_previous_view[i], list_previous_depth[i]
-                )
+        #for i in range(self.number_previous_frames):
+        list_previous_features.append(
+            self.feature_extract_model2(
+                list_previous_view[0], list_previous_depth[0]
             )
+        )
+        list_previous_features.append(
+            self.feature_extract_model3(
+                list_previous_view[1], list_previous_depth[1]
+            )
+        )
+        list_previous_features.append(
+            self.feature_extract_model4(
+                list_previous_view[2], list_previous_depth[2]
+            )
+        )
+        list_previous_features.append(
+            self.feature_extract_model5(
+                list_previous_view[3], list_previous_depth[3]
+            )
+        )
+        list_previous_features.append(
+            self.feature_extract_model6(
+                list_previous_view[4], list_previous_depth[4]
+            )
+        )
 
         # 2°) upsample features
         # print('c = ', current_features.shape)
         current_features_upsampled = self.zero_upsampling_model(current_features)
-
+        current_rgbd = torch.cat((current_view, current_depth),dim=1)
+        current_features_upsampled_for_reweighting = self.zero_upsampling_model(current_rgbd)
+        
         list_previous_features_upsampled = []
         for i in range(self.number_previous_frames):
             list_previous_features_upsampled.append(
@@ -87,18 +174,14 @@ class NSRRModel(BaseModel):
         for i in range(self.number_previous_frames):
             list_previous_motion_upsampled.append(
                 self.motion_upsampling_model(
-                    self.flow_motion_model(current_flow)
+                    self.flow_motion_model(list_previous_flow[i])
                 )
             )
 
         # 4°) warp previous features and motion recursively
         # to align them with the current one.
-        list_previous_motion_from_current = [
-            self.motion_warping_model(
-                list_previous_motion_upsampled[0],
-                current_motion_upsampled
-            )
-        ]
+        list_previous_motion_from_current = []
+        list_previous_motion_from_current.append(list_previous_motion_upsampled[0])
 
         # back warp motion
         for i in range(1, self.number_previous_frames):
@@ -123,7 +206,7 @@ class NSRRModel(BaseModel):
 
 
         list_previous_features_reweighted = self.feature_reweighting_model.forward(
-            current_features_upsampled,
+            current_features_upsampled_for_reweighting,
             list_previous_features_warped
         )
 
@@ -137,7 +220,6 @@ class NSRRModel(BaseModel):
         target = self.reconstructionModel.forward(current_features_upsampled, list_previous_features_reweighted)
 
         return target
-
 
 class NSRRFeatureExtractionModel(BaseModel):
     """
@@ -191,18 +273,18 @@ class NSRRFeatureReweightingModel(BaseModel):
         # to each previous RGBD frame? That's what I'm going to do for now.
         # So the input number of channels in the first 2D convolution is 8.
         process_seq = nn.Sequential(
-            nn.Conv2d(8, 32, kernel_size=kernel_size, padding=padding),
+            nn.Conv2d(24, 40, kernel_size=kernel_size, padding=padding),
             nn.ReLU(),
-            nn.Conv2d(32, 32, kernel_size=kernel_size, padding=padding),
+            nn.Conv2d(40, 40, kernel_size=kernel_size, padding=padding),
             nn.ReLU(),
-            nn.Conv2d(32, 4, kernel_size=kernel_size, padding=padding),
+            nn.Conv2d(40, 5, kernel_size=kernel_size, padding=padding),
             nn.Tanh(),
             Remap([-1, 1], [0, self.scale])
         )
         self.add_module("weighting", process_seq)
 
     def forward(self,
-                current_features_upsampled:
+                current_features_upsampled_for_reweighting:
                     torch.Tensor,
                 list_previous_features_warped:
                     List[torch.Tensor]) -> List[torch.Tensor]:
@@ -210,30 +292,37 @@ class NSRRFeatureReweightingModel(BaseModel):
         # current_feature_upsampled[:, :4] are the RGBD of the current frame (upsampled).
         # previous_features_warped [:, :4] are the RGBD of the previous frame (upsampled then warped).
         # TODO cache the results
-        list_weighting_maps = []
+        # list_weighting_maps = []
+        #print("current_upsample:", current_features_upsampled.shape)
+        #list_previous_rgbd = []
+        reweight_feed_in = current_features_upsampled_for_reweighting
         for previous_features_warped in list_previous_features_warped:
-            list_weighting_maps.append(self.weighting(
-                torch.cat((current_features_upsampled[:, :4],
-                           previous_features_warped[:, :4]), dim=1)))
-
-        # print(list_weighting_maps[0].shape)
-        # print(list_previous_features_warped[0].shape)
-        # todo: figure out what to do here.
-        # in the paper:
-        # "Then each weighting map is multiplied to all features
-        # of the corresponding previous frame."
-        # Each weighting map is multiplied
-        # Multiplying each feature of each previous frame
-        # by the corresponding weighting map?
+            reweight_feed_in = torch.cat((reweight_feed_in, previous_features_warped[:,:4]), dim=1)
+        
+        list_weighting_map = self.weighting(reweight_feed_in)
+        list_weighting_map_cal = list_weighting_map.squeeze(0)
         list_previous_features_reweighted = []
-        for i in range(len(list_weighting_maps)):
-            list_previous_features_reweighted.append(list_previous_features_warped[i])
-            """
-            list_previous_features_reweighted.append(torch.mul(
-                list_previous_features_warped[i],
-                list_weighting_maps[i]
-            ))
-           """
+        for i in range(5):
+            #list_previous_features_reweighted.append(list_previous_features_warped[i])
+            tmp = list_previous_features_warped[i].squeeze(0)
+            tmp2 = [1]*12
+            for j in range(12):
+                tmp2[j] = torch.mul(tmp[j], list_weighting_map_cal[i])
+            result_list_previous0 = tmp2[0].unsqueeze(0)
+            result_list_previous1 = torch.cat((result_list_previous0, tmp2[1].unsqueeze(0)), dim=0)
+            result_list_previous2 = torch.cat((result_list_previous1, tmp2[2].unsqueeze(0)), dim=0)
+            result_list_previous3 = torch.cat((result_list_previous2, tmp2[3].unsqueeze(0)), dim=0)
+            result_list_previous4 = torch.cat((result_list_previous3, tmp2[4].unsqueeze(0)), dim=0)
+            result_list_previous5 = torch.cat((result_list_previous4, tmp2[5].unsqueeze(0)), dim=0)
+            result_list_previous6 = torch.cat((result_list_previous5, tmp2[6].unsqueeze(0)), dim=0)
+            result_list_previous7 = torch.cat((result_list_previous6, tmp2[7].unsqueeze(0)), dim=0)
+            result_list_previous8 = torch.cat((result_list_previous7, tmp2[8].unsqueeze(0)), dim=0)
+            result_list_previous9 = torch.cat((result_list_previous8, tmp2[9].unsqueeze(0)), dim=0)
+            result_list_previous10 = torch.cat((result_list_previous9, tmp2[10].unsqueeze(0)), dim=0)
+            result_list_previous11 = torch.cat((result_list_previous10, tmp2[11].unsqueeze(0)), dim=0)
+            result_list_previous_final = result_list_previous11.unsqueeze(0)
+            list_previous_features_reweighted.append(result_list_previous_final)
+                    
         return list_previous_features_reweighted
 
 
@@ -313,11 +402,11 @@ class NSRRReconstructionModel(BaseModel):
                         diffY // 2, diffY - diffY // 2])
         return x
 
-    def forward(self, current_features: torch.Tensor, list_previous_features: [torch.Tensor]) -> torch.Tensor:
+    def forward(self, current_features: torch.Tensor,list_previous_features_reweighted: [torch.Tensor]) -> torch.Tensor:
         # Features of the current frame and the reweighted features
         # of previous frames are concatenated
         
-        x = torch.cat((current_features, *list_previous_features), 1)
+        x = torch.cat((current_features, *list_previous_features_reweighted), 1)
         # Cache result to handle 'skipped' connection for encoder 1 & 2
         # print("x.shape = ", x.shape)
         x_encoder_1 = self.encoder_1(x)

@@ -4,7 +4,7 @@ from torchvision.utils import make_grid
 from torchvision import utils as vutils
 from base import BaseTrainer
 from utils import inf_loop, MetricTracker
-
+import pytorch_colors as colors
 
 class Trainer(BaseTrainer):
     """
@@ -51,12 +51,15 @@ class Trainer(BaseTrainer):
             img_flow = img_flow.to(self.device)
             img_view_truth = img_view_truth.to(self.device)
             target = img_view_truth[0].unsqueeze(0)
+            # vutils.save_image(target, './target/target_{}.png'.format(epoch))
+            # vutils.save_image(img_view[0], './target/img_view_{}.png'.format(epoch))
             self.optimizer.zero_grad()
             output = self.model(img_view, img_depth, img_flow)
-            loss = self.criterion(output, img_view_truth, 0.1)
+            # print(output.shape)
+            # print(target.shape)
+            loss = self.criterion(output, target, 0.1)
             loss.backward()
             self.optimizer.step()
-
             self.writer.set_step((epoch - 1) * self.len_epoch + batch_idx)
             self.train_metrics.update('loss', loss.item())
             for met in self.metric_ftns:
