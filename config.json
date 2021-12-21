@@ -17,7 +17,7 @@
             "view_dirname": "View/",
             "depth_dirname": "Depth/",
             "flow_dirname": "Motion/",
-            "downscale_factor" : 2
+            "downscale_factor" : 4
         }
     },
     "optimizer": {
@@ -40,7 +40,7 @@
         }
     },
     "trainer": {
-        "epochs": 100,
+        "epochs": 400,
 
         "save_dir": "saved/",
         "save_period": 1,

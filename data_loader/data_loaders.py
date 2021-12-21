@@ -27,7 +27,7 @@ class NSRRDataLoader(BaseDataLoader):
                  shuffle: bool = False,
                  validation_split: float = 0.0,
                  num_workers: int = 1,
-                 downscale_factor: Union[Tuple[int, int], List[int], int] = (2, 2)
+                 downscale_factor: Union[Tuple[int, int], List[int], int] = (4, 4)
                  ):
         dataset = NSRRDataset(data_dir,
                               view_dirname=view_dirname,
@@ -53,7 +53,7 @@ class NSRRDataset(Dataset):
                  view_dirname: str,
                  depth_dirname: str,
                  flow_dirname: str,
-                 downscale_factor: Union[Tuple[int, int], List[int], int] = (2, 2),
+                 downscale_factor: Union[Tuple[int, int], List[int], int] = (4, 4),
                  transform: nn.Module = None,
                  ):
         super(NSRRDataset, self).__init__()

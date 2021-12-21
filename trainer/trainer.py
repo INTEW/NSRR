@@ -70,7 +70,7 @@ class Trainer(BaseTrainer):
                 self.train_metrics.update(met.__name__, met(output, target))
             #print("loss = ", loss)
             #vutils.save_image(img_view[0], './output/{}.png'.format(batch_idx))
-            vutils.save_image(output, './output/epoch_{}_id_{}.png'.format(epoch,batch_idx))
+            # vutils.save_image(output, './output/epoch_{}_id_{}.png'.format(epoch,batch_idx))
             # vutils.save_image(target, './target/{}.png'.format(batch_idx))
             if batch_idx % self.log_step == 0:
                 self.logger.debug('Train Epoch: {} {} Loss: {:.6f}'.format(

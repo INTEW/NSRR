@@ -14,7 +14,7 @@ class NSRRModel(BaseModel):
         super(NSRRModel, self).__init__()
         self.kernel_size = 3
         self.padding = 1
-        self.scale_factor = (2, 2)
+        self.scale_factor = (4, 4)
         self.flow_sensitivity = 0.5
         self.number_previous_frames = 5
         ###############################################################
@@ -114,7 +114,7 @@ class NSRRModel(BaseModel):
         list_previous_depth = []
         list_previous_flow = []
         
-        current_view_Ycbcr = colors.rgb_to_ycbcr(current_view)
+        #current_view_Ycbcr = colors.rgb_to_ycbcr(current_view)
         
         for i in range(1, self.number_previous_frames + 1):
             list_previous_view.append(x_view[i].unsqueeze(0))
@@ -122,7 +122,7 @@ class NSRRModel(BaseModel):
             list_previous_flow.append(x_flow[i].unsqueeze(0))
 
         # 1°) extract features
-        current_features = self.feature_extract_model1(current_view_Ycbcr, current_depth)
+        current_features = self.feature_extract_model1(current_view, current_depth)
         list_previous_features = []
         #for i in range(self.number_previous_frames):
         list_previous_features.append(
@@ -418,6 +418,8 @@ class NSRRReconstructionModel(BaseModel):
         # Crop the skipped image to target dimension and concatenate for encoder 1 & 2
         #x_encoder_2 = self.crop_tensor(x_encoder_2, x)
         # (128, 64) = (192)
+        # print("x",  x.shape)
+        # print("x_encoder_2", x_encoder_2.shape)
         x = torch.cat((x, x_encoder_2), 1)
         x = self.cat_1(x)
         x = self.decoder_2(x)

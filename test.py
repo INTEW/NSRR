@@ -7,6 +7,7 @@ import model.metric as module_metric
 import model.model as module_arch
 from parse_config import ConfigParser
 from torchvision import utils as vutils
+import time
 
 
 def main(config):
@@ -55,7 +56,10 @@ def main(config):
             img_view_truth = img_view_truth.to(device)
             target = img_view_truth[0].unsqueeze(0)
             low_target = img_view[0].unsqueeze(0)
+            start = time.perf_counter()
             output = model(img_view , img_depth , img_flow)
+            end = time.perf_counter()
+            print("upsampling time = ", end-start, 's')
             vutils.save_image(output, './output_test/output_{}.png'.format(i))
             vutils.save_image(low_target, './output_test/low_{}.png'.format(i))
 
