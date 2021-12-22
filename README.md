@@ -24,7 +24,7 @@ pip install -r requirements.txt
 
 ### Dataset
 
-We generate the dataset by unity, if you want to get the access to our generated dataset, please email to me.
+We generate the dataset by unity, if you want to get the access to our generated dataset, you can download bellow.
 
 
 | Dataset |  Type | Link |
