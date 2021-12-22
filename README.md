@@ -106,9 +106,9 @@ We calculate the PSNR and SSIM of the supersampling images of different methods:
 
 <table>
     <tr>
-        <td><center>Input</center></td>
-        <td><center>SRCNN</center></td>
-        <td><center>NSRR (ours)</center></td>
+        <td><center>Input(180*120)</center></td>
+        <td><center>SRCNN(720*480)</center></td>
+        <td><center>NSRR (ours,720*480)</center></td>
     </tr>
     <tr>
     	<td>
