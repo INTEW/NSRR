@@ -101,9 +101,6 @@ class NSRRModel(BaseModel):
     def motion_warping_model(self, img, motion):
         return backward_warp_motion(img, motion)
     def forward(self, x_view, x_depth, x_flow):
-        #print(x_view.shape)
-        # print(x_depth.shape)
-        #print(x_flow.shape)
 
         # [6:c:w:h]
         current_view = x_view[0].unsqueeze(0)
@@ -211,12 +208,6 @@ class NSRRModel(BaseModel):
         )
 
         # 6°) reconstruction 
-        # print("l = ", len(list_previous_features_reweighted))
-        # print("c.shape = ", current_features_upsampled.shape)
-        # print('-----------------------------------------')
-        # for i in list_previous_features_reweighted:
-        #     print(i.shape)
-        # print('-----------------------------------------')
         target = self.reconstructionModel.forward(current_features_upsampled, list_previous_features_reweighted)
 
         return target
@@ -260,18 +251,8 @@ class NSRRFeatureReweightingModel(BaseModel):
         # gives accurate enough results.
         self.scale = 10
         kernel_size = 3
-        # Adding padding here so that we do not lose width or height because of the convolutions.
-        # The input and output must have the same image dimensions so that we may concatenate them
         padding = 1
-        # todo: I'm unsure about what to feed the module here, from the paper:
-        # "The feature reweighting module is a 3-layer convolutional neural network,
-        # which takes the RGB-D of the zero-upsampled current frame
-        # as well as the zero-upsampled, warped previous frames as input,
-        # and generates a pixel-wise weighting map for each previous frame,
-        # with values between 0 and 10."
-        # So do we concatenated the RGBD of the current frame
-        # to each previous RGBD frame? That's what I'm going to do for now.
-        # So the input number of channels in the first 2D convolution is 8.
+
         process_seq = nn.Sequential(
             nn.Conv2d(24, 40, kernel_size=kernel_size, padding=padding),
             nn.ReLU(),
@@ -292,9 +273,6 @@ class NSRRFeatureReweightingModel(BaseModel):
         # current_feature_upsampled[:, :4] are the RGBD of the current frame (upsampled).
         # previous_features_warped [:, :4] are the RGBD of the previous frame (upsampled then warped).
         # TODO cache the results
-        # list_weighting_maps = []
-        #print("current_upsample:", current_features_upsampled.shape)
-        #list_previous_rgbd = []
         reweight_feed_in = current_features_upsampled_for_reweighting
         for previous_features_warped in list_previous_features_warped:
             reweight_feed_in = torch.cat((reweight_feed_in, previous_features_warped[:,:4]), dim=1)
@@ -341,12 +319,6 @@ class NSRRReconstructionModel(BaseModel):
         assert(number_previous_frames > 0)
         # This is constant throughout the life of a model.
         self.number_previous_frames = number_previous_frames
-
-        # Split the network into 5 groups of 2 layers to apply concat operation at each stage
-        # todo: the first layer of the model would take
-        # the concatenated features of all previous frames,
-        # so the input number of channels of the first 2D convolution
-        # would be 12 * self.number_previous_frames
         encoder1 = nn.Sequential(
             nn.Conv2d(72, 32, kernel_size=kernel_size, padding=padding),
             nn.ReLU(),
