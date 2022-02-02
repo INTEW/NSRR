@@ -29,8 +29,8 @@ We generate the dataset by unity, if you want to get the access to our generated
 
 | Dataset |  Type | Link |
 |---------|--------|------|
-| 217-Images | Train | [Download](https://jbox.sjtu.edu.cn/l/610oOe) |
-| 72-Images | Test | [Download](https://jbox.sjtu.edu.cn/l/Z1or09) |
+| 217-Images | Train | [Download](https://drive.google.com/file/d/1vUX_lSYiz89ZLi3EeYQQd1BOfv8AA-um/view?usp=sharing) |
+| 72-Images | Test | [Download](https://drive.google.com/file/d/1wu2o_VIN_ixKR6zTWVz8lO_Zej01S35m/view?usp=sharing) |
 
 
 
@@ -79,8 +79,8 @@ Here are two pre-trained models (NSRRmodel-2 is trained only in wooden house sce
 
 | Model | Scale | Link |
 |-------|-------|------|
-| NSRRmodel-2 | 2 | [Download](https://jbox.sjtu.edu.cn/l/6105KR) |
-| NSRRmodel-4 | 4 | [Download](https://jbox.sjtu.edu.cn/l/J1u3jU) |
+| NSRRmodel-2 | 2 | [Download](https://drive.google.com/file/d/10a6Mmtup4e_7FrymB1fyBcsBg7V8o976/view?usp=sharing) |
+| NSRRmodel-4 | 4 | [Download](https://drive.google.com/file/d/1teWuQU-BMmWvicqHPC8nXQprOGtnbLjN/view?usp=sharing) |
 
 
 
