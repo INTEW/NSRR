@@ -50,18 +50,14 @@ def main(config):
 
     with torch.no_grad():
         for i, (img_view, img_depth, img_flow, img_view_truth) in enumerate(tqdm(data_loader)):
-            img_view = img_view.to(device)
-            img_depth = img_depth.to(device)
-            img_flow = img_flow.to(device)
-            img_view_truth = img_view_truth.to(device)
-            target = img_view_truth[0].unsqueeze(0)
-            low_target = img_view[0].unsqueeze(0)
-            start = time.perf_counter()
-            output = model(img_view , img_depth , img_flow)
-            end = time.perf_counter()
+            img_view = img_view.to(self.device)
+            img_depth = img_depth.to(self.device)
+            img_flow = img_flow.to(self.device)
+            img_view_truth = img_view_truth.to(self.device)
+            target = img_view_truth[:,:,0,:,:]
+            output = model(img_view , img_depth , img_flow))
             print("upsampling time = ", end-start, 's')
             vutils.save_image(output, './output_test/output_{}.png'.format(i))
-            vutils.save_image(low_target, './output_test/low_{}.png'.format(i))
 
             #
             # save sample images, or do something with output here
