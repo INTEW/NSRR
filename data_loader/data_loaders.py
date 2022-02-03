@@ -1,11 +1,15 @@
-
+import imp
 import os
 from base import BaseDataLoader
-
+import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.data.dataloader import SequentialSampler
-import torchvision.transforms as tf
+# import torchvision.transforms as tf
+import torchvision as tv
+from torchvision import transforms
+from torchvision.transforms import functional
+from utils import optical_flow_to_motion
 
 from PIL import Image
 
@@ -62,41 +66,57 @@ class NSRRDataset(Dataset):
         self.view_dirname = view_dirname
         self.depth_dirname = depth_dirname
         self.flow_dirname = flow_dirname
-
+        ## TODO: move `idx_to_seq` to the input param of NSRRDataset
+        self.idx_to_seq = lambda x: [x+i for i in range(6)]
         if type(downscale_factor) == int:
             downscale_factor = (downscale_factor, downscale_factor)
         self.downscale_factor = tuple(downscale_factor)
-
         if transform is None:
-            self.transform = tf.ToTensor()
+            self.transform = tv.transforms.ToTensor()
         self.view_listdir = os.listdir(os.path.join(self.data_dir, self.view_dirname))
         self.view_listdir.sort(key=lambda x:int(x.split('.')[0]))
         self.view_listdir.reverse()
-
+        print(self.view_listdir)
     def __getitem__(self, index):
-        # view
-        #print(index)
-        image_name = self.view_listdir[index]
-        view_path = os.path.join(self.data_dir, self.view_dirname, image_name)
-        depth_path = os.path.join(self.data_dir, self.depth_dirname, image_name)
-        flow_path = os.path.join(self.data_dir, self.flow_dirname, image_name)
-
-        trans = self.transform
-
-        img_view_truth = trans(Image.open(view_path))
-
-        downscaled_size = get_downscaled_size(img_view_truth.unsqueeze(0), self.downscale_factor)
-
-        trans_downscale = tf.Resize(downscaled_size)
-        trans = tf.Compose([trans_downscale, trans])
-
-        img_view = trans_downscale(img_view_truth)
-        # depth data is in a single-channel image.
-        img_depth = trans(Image.open(depth_path).convert(mode="L"))
-        img_flow = trans(Image.open(flow_path))
-
+        seq_list = self.idx_to_seq(index)
+        ## TODO: multiprocess to read img
+        img_view_list, img_depth_list, img_flow_list, img_view_truth_list = [], [], [], []
+        for i in seq_list:
+            image_name = self.view_listdir[i]
+            view_path = os.path.join(self.data_dir, self.view_dirname, image_name)
+            depth_path = os.path.join(self.data_dir, self.depth_dirname, image_name)
+            flow_path = os.path.join(self.data_dir, self.flow_dirname, image_name)
+            # print(f"view_path = {view_path}\ndepth_path = {depth_path}\nflow_path = {flow_path}")
+            # trans = self.transform
+            # img_view_truth = trans(Image.open(view_path))
+            img_view_truth = tv.io.read_image(view_path, mode=tv.io.ImageReadMode.RGB) / 255
+            img_depth = tv.io.read_image(depth_path, mode=tv.io.ImageReadMode.RGB)[0, :, :].unsqueeze(0) / 255
+            img_flow = tv.io.read_image(flow_path, mode=tv.io.ImageReadMode.RGB) / 255
+            C, H, W = img_view_truth.shape
+            HH = int(H / self.downscale_factor[0])
+            WW = int(W / self.downscale_factor[1])
+            # downscaled_size = get_downscaled_size(img_view_truth.unsqueeze(0), self.downscale_factor)
+            # trans = tf.Compose([trans_downscale, trans])
+            img_view = tv.transforms.functional.resize(img_view_truth, [HH, WW])
+            img_depth = tv.transforms.functional.resize(img_depth, [HH, WW])
+            img_flow = tv.transforms.functional.resize(img_flow, [HH, WW])
+            img_flow.unsqueeze_(0)
+            img_flow = optical_flow_to_motion(img_flow)
+            img_flow.squeeze_(0)
+            img_view_list.append(img_view.unsqueeze(1))
+            img_depth_list.append(img_depth.unsqueeze(1))
+            img_flow_list.append(img_flow.unsqueeze(1))
+            img_view_truth_list.append(img_view_truth.unsqueeze(1))
+        img_view = torch.cat(img_view_list, dim=1)
+        img_depth = torch.cat(img_depth_list, dim=1)
+        img_flow = torch.cat(img_flow_list, dim=1)
+        img_view_truth = torch.cat(img_view_truth_list, dim=1)
+        # print("img_view.shape = ", img_view.shape)
+        # print("img_depth.shape = ", img_depth.shape)
+        # print("img_flow.shape = ", img_flow.shape)
+        # print("img_view_truth.shape = ", img_view_truth.shape)
         return img_view, img_depth, img_flow, img_view_truth
 
     def __len__(self) -> int:
-        return len(self.view_listdir)
+        return len(self.view_listdir) - 6 + 1
 
