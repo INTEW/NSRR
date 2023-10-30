@@ -55,7 +55,7 @@ def main(config):
             img_flow = img_flow.to(self.device)
             img_view_truth = img_view_truth.to(self.device)
             target = img_view_truth[:,:,0,:,:]
-            output = model(img_view , img_depth , img_flow))
+            output = model(img_view , img_depth , img_flow)
             print("upsampling time = ", end-start, 's')
             vutils.save_image(output, './output_test/output_{}.png'.format(i))
 
